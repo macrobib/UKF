@@ -71,8 +71,8 @@ public:
   double lambda_;
 
   // Radar and Lidar noise parameters.
-  VectorXd R_radar_;
-  VectorXd R_lidar_;
+  MatrixXd R_radar_;
+  MatrixXd R_lidar_;
 
   //NIS values.
   double NIS_laser_;
@@ -104,16 +104,16 @@ public:
    * Updates the state and the state covariance matrix using a laser measurement
    * @param meas_package The measurement at k+1
    */
-  void UpdateLidar(MeasurementPackage meas_package);
+  void UpdateLidar(MeasurementPackage& meas_package);
 
   /**
    * Updates the state and the state covariance matrix using a radar measurement
    * @param meas_package The measurement at k+1
    */
-  void UpdateRadar(MeasurementPackage meas_package);
+  void UpdateRadar(MeasurementPackage& meas_package);
 
   /*Generate sigma points.*/
-  void GenerateSigmaPoints(MatrixXd* XSig_out);
+  void GenerateSigmaPoints(MatrixXd& XSig_out);
   void SigmaPointPrediction(VectorXd*, double);
   void PredictMeanCovariance(Eigen::VectorXd*, Eigen::VectorXd*);
 };

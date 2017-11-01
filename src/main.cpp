@@ -4,8 +4,11 @@
 #include <math.h>
 #include "ukf.h"
 #include "tools.h"
+#include "read_csv.h"
 
 using namespace std;
+
+//#define DO_LOCAL_TESTING
 
 // for convenience
 using json = nlohmann::json;
@@ -26,6 +29,7 @@ std::string hasData(std::string s) {
   return "";
 }
 
+#ifndef DO_LOCAL_TESTING
 int main()
 {
   uWS::Hub h;
@@ -186,90 +190,46 @@ int main()
   }
   h.run();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#else
+
+auto callback_function(dstream_t& data) -> bool{                               
+	static UKF ukf;
+    static auto count = 0;
+    MeasurementPackage meas_package;
+
+	if (data.type == "L") {
+		meas_package.sensor_type_ = MeasurementPackage::LASER;
+		meas_package.raw_measurements_ = VectorXd(2);
+		float px = data.px_rho ;
+		float py = data.py_theta;
+        float timestamp = data.timestamp;
+
+		meas_package.raw_measurements_ << px, py;
+		meas_package.timestamp_ = timestamp;
+    } else if (data.type == "R") {
+        meas_package.sensor_type_ = MeasurementPackage::RADAR;
+        meas_package.raw_measurements_ = VectorXd(3);
+		float rho = data.px_rho ;
+		float theta = data.py_theta;
+		float rhod = data.rhod;
+        float timestamp = data.timestamp;
+        meas_package.raw_measurements_ << rho, theta, rhod;
+        meas_package.timestamp_ = timestamp;
+        }
+	ukf.ProcessMeasurement(meas_package);
+    count++;
+    if(count > 2){
+        std::cout << "Exiting."<< std::endl;
+        exit(0);
+    }
+}
+
+auto main(int argc, char* argv[]) -> int{
+    std::cout<<"Running local testing mode."<< std::endl;
+	CSVHandler cshandler("../data/data.csv");
+	auto status = cshandler.stream_handler(callback_function);
+	if(!status)
+		std::cout<<"stream handling failed.."<< std::endl;
+    return EXIT_SUCCESS;
+}
+#endif
